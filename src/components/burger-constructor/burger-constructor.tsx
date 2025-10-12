@@ -11,10 +11,6 @@ import {
   resetModalData,
   setOrderRequest
 } from '../../services/slices/order/orderSlice';
-import {
-  getFeedsData,
-  getUserOrders
-} from '../../services/slices/feeds/actions';
 
 export const BurgerConstructor: FC = () => {
   const dispatch = useDispatch();
@@ -42,8 +38,6 @@ export const BurgerConstructor: FC = () => {
 
     if (user) {
       dispatch(sendOrder(orderSendData));
-      dispatch(getFeedsData());
-      dispatch(getUserOrders());
       dispatch(clearConstructor());
     }
   };
