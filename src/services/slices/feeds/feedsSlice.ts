@@ -1,12 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { TOrder } from '@utils-types';
-import { getFeedsData, getUserOrders } from './actions';
+import { getFeedsData, getUserOrders, getOrderByNumber } from './actions';
 
 type TFeeds = {
   feed: TOrder[];
   userOrders: TOrder[];
   isFeedLoading: boolean;
   isUserOrdersLoading: boolean;
+  currentOrder: TOrder | null;
+  isOrderLoading: boolean;
   total: number;
   totalToday: number;
   errMsg?: string;
@@ -17,6 +19,8 @@ export const initialState: TFeeds = {
   userOrders: [],
   isFeedLoading: false,
   isUserOrdersLoading: false,
+  currentOrder: null,
+  isOrderLoading: false,
   total: 0,
   totalToday: 0,
   errMsg: ''
@@ -30,7 +34,9 @@ export const feedsSlice = createSlice({
     getStoreFeed: (state) => state.feed,
     getStoreLoadFeed: (state) => state.isFeedLoading,
     getStoreUserOrders: (state) => state.userOrders,
-    getStoreLoadUserOrders: (state) => state.isUserOrdersLoading
+    getStoreLoadUserOrders: (state) => state.isUserOrdersLoading,
+    getStoreCurrentOrder: (state) => state.currentOrder,
+    getStoreLoadCurrentOrder: (state) => state.isOrderLoading
   },
   extraReducers(builder) {
     builder
@@ -59,6 +65,18 @@ export const feedsSlice = createSlice({
       .addCase(getUserOrders.rejected, (state, aciton) => {
         state.isUserOrdersLoading = false;
         state.errMsg = aciton.error?.message;
+      })
+      .addCase(getOrderByNumber.pending, (state) => {
+        state.errMsg = '';
+        state.isOrderLoading = true;
+      })
+      .addCase(getOrderByNumber.fulfilled, (state, action) => {
+        state.isOrderLoading = false;
+        state.currentOrder = action.payload.orders[0] ?? null;
+      })
+      .addCase(getOrderByNumber.rejected, (state, action) => {
+        state.isOrderLoading = false;
+        state.errMsg = action.error?.message;
       });
   }
 });
@@ -67,6 +85,8 @@ export const {
   getStoreFeed,
   getStoreUserOrders,
   getStoreLoadFeed,
-  getStoreLoadUserOrders
+  getStoreLoadUserOrders,
+  getStoreCurrentOrder,
+  getStoreLoadCurrentOrder
 } = feedsSlice.selectors;
 export const feedsReducer = feedsSlice.reducer;
