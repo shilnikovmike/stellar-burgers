@@ -1,7 +1,7 @@
 import { setCookie, getCookie } from './cookie';
 import { TIngredient, TOrder, TUser } from './types';
 
-export const BASE_URL = 'https://norma.nomoreparties.space/api/';
+export const BASE_URL = 'https://norma.education-services.ru/api/';
 
 const checkResponse = async <T>(res: Response): Promise<T> => {
   const data = await res.json();

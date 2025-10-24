@@ -7,6 +7,11 @@ type TBurgerConstructor = {
   ingredients: TConstructorIngredient[];
 };
 
+type TMoveIngredientPayload = {
+  fromIndex: number;
+  toIndex: number;
+};
+
 export const initialState: TBurgerConstructor = {
   bun: null,
   ingredients: []
@@ -34,6 +39,25 @@ export const burgerConstructorSlice = createSlice({
         (item) => item.id !== action.payload
       );
     },
+    moveIngredient: (state, action: PayloadAction<TMoveIngredientPayload>) => {
+      const { fromIndex, toIndex } = action.payload;
+
+      if (
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= state.ingredients.length ||
+        toIndex >= state.ingredients.length
+      ) {
+        return;
+      }
+
+      const [movedItem] = state.ingredients.splice(fromIndex, 1);
+
+      if (movedItem) {
+        state.ingredients.splice(toIndex, 0, movedItem);
+      }
+    },
     clearConstructor: (state) => {
       state.bun = null;
       state.ingredients = [];
@@ -47,6 +71,11 @@ export const burgerConstructorSlice = createSlice({
 
 export const { getConstructorBun, getConstructorIngredients } =
   burgerConstructorSlice.selectors;
-export const { addBun, addIngredient, removeIngredient, clearConstructor } =
-  burgerConstructorSlice.actions;
+export const {
+  addBun,
+  addIngredient,
+  removeIngredient,
+  clearConstructor,
+  moveIngredient
+} = burgerConstructorSlice.actions;
 export const burgerConstructorReducer = burgerConstructorSlice.reducer;
