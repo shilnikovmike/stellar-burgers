@@ -1,0 +1,60 @@
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "bun-01",
+      "name": "Light Bun",
+      "type": "bun",
+      "proteins": 20,
+      "fat": 5,
+      "carbohydrates": 40,
+      "calories": 230,
+      "price": 100,
+      "image": "",
+      "image_mobile": "",
+      "image_large": ""
+    },
+    {
+      "_id": "bun-02",
+      "name": "Dark Bun",
+      "type": "bun",
+      "proteins": 25,
+      "fat": 8,
+      "carbohydrates": 35,
+      "calories": 240,
+      "price": 120,
+      "image": "",
+      "image_mobile": "",
+      "image_large": ""
+    },
+    {
+      "_id": "sauce-01",
+      "name": "Spicy Sauce",
+      "type": "sauce",
+      "proteins": 5,
+      "fat": 2,
+      "carbohydrates": 10,
+      "calories": 60,
+      "price": 30,
+      "image": "",
+      "image_mobile": "",
+      "image_large": ""
+    },
+    {
+      "_id": "main-01",
+      "name": "Beef Patty",
+      "type": "main",
+      "proteins": 50,
+      "fat": 30,
+      "carbohydrates": 0,
+      "calories": 430,
+      "price": 200,
+      "image": "",
+      "image_mobile": "",
+      "image_large": ""
+    }
+  ]
+}
+
+
+
