@@ -1,22 +1,11 @@
 ﻿import tokens from '../fixtures/token.json';
 import orderData from '../fixtures/order.json';
 
-const API_PATH = '**/api';
 const { accessToken, refreshToken } = tokens;
 const { order } = orderData;
 
 beforeEach(() => {
-  cy.intercept('GET', `${API_PATH}/auth/user`, {
-    fixture: 'user.json'
-  }).as('getUser');
-
-  cy.intercept('POST', `${API_PATH}/auth/token`, {
-    fixture: 'token.json'
-  }).as('refreshToken');
-
-  cy.intercept('POST', `${API_PATH}/orders`, {
-    fixture: 'order.json'
-  }).as('createOrder');
+  cy.stubAuthApi();
 });
 
 afterEach(() => {
@@ -28,78 +17,99 @@ afterEach(() => {
 
 describe('Тесты страницы конструктора', () => {
   beforeEach(() => {
-    cy.intercept('GET', `${API_PATH}/ingredients`, {
-      fixture: 'ingredients.json'
-    }).as('getIngredients');
+    cy.stubIngredients()
+      .loginWithTokens({ accessToken, refreshToken })
+      .visitConstructor()
+      .aliasConstructorUi();
 
-    cy.visit('/', {
-      onBeforeLoad(win) {
-        win.localStorage.setItem('refreshToken', refreshToken);
-        win.document.cookie = `accessToken=${accessToken}`;
-      }
+    cy.wait('@getIngredients').then(({ response }) => {
+      expect(response?.statusCode).to.eq(200);
+      expect(response?.body).to.have.property('success', true);
+      expect(response?.body?.data).to.be.an('array').and.not.be.empty;
     });
 
-    cy.wait('@getIngredients');
-    cy.wait('@getUser');
-    cy.get('[data-cy=bun]').should('exist');
+    cy.wait('@getUser').then(({ response }) => {
+      expect(response?.statusCode).to.eq(200);
+      expect(response?.body).to.deep.include({
+        success: true,
+        user: {
+          name: 'Test User',
+          email: 'test@example.com'
+        }
+      });
+    });
+
+    cy.get('@bun').should('exist');
   });
 
   describe('Загрузка ингредиентов и взаимодействие с конструктором', () => {
     it('Добавляет булку и начинку в конструктор', () => {
-      cy.get('[data-cy=bun] .common_button').first().click();
-      cy.get('[data-cy=main] .common_button').first().click();
-
-      cy.get('[data-cy="constructor-item"]').should('have.length', 1);
-      cy.get('[data-cy="constructor-item"]')
-        .first()
-        .should('contain.text', 'Beef Patty');
-      cy.get('[data-cy=total-price]').should('contain.text', '400');
+      cy.constructorPage().then((page) => {
+        page
+          .addBun()
+          .addMainIngredient()
+          .expectConstructorItemsCount(1)
+          .expectConstructorItemContains(0, 'Beef Patty')
+          .expectTotalPrice('400');
+      });
     });
   });
 
   describe('Тесты модального окна ингредиента', () => {
     it('Открывает модальное окно ингредиента', () => {
-      cy.get('[data-cy=bun]').first().find('a').click();
-
-      cy.get('[data-cy=modal]').should('be.visible');
-      cy.get('[data-cy=modal] h3').should('contain.text', 'Light Bun');
+      cy.constructorPage().then((page) => {
+        page
+          .openBunDetails()
+          .expectModalVisible()
+          .expectModalTitle('Light Bun');
+      });
     });
 
     it('Закрывает модальное окно кнопкой', () => {
-      cy.get('[data-cy=bun]').first().find('a').click();
-
-      cy.get('[data-cy=modal]').should('be.visible');
-      cy.get('[data-cy=modal-close]').click();
-      cy.get('[data-cy=modal]').should('not.exist');
+      cy.constructorPage().then((page) => {
+        page
+          .openBunDetails()
+          .expectModalVisible()
+          .closeModal()
+          .expectModalNotExist();
+      });
     });
 
     it('Закрывает модальное окно по оверлею', () => {
-      cy.get('[data-cy=bun]').first().find('a').click();
-
-      cy.get('[data-cy=modal]').should('be.visible');
-      cy.get('[data-cy=modal-overlay]').click({ force: true });
-      cy.get('[data-cy=modal]').should('not.exist');
+      cy.constructorPage().then((page) => {
+        page
+          .openBunDetails()
+          .expectModalVisible()
+          .closeModalByOverlay()
+          .expectModalNotExist();
+      });
     });
   });
 
   describe('Процесс создания заказа', () => {
     it('Отправляет заказ и очищает конструктор', () => {
-      cy.get('[data-cy=bun] .common_button').first().click();
-      cy.get('[data-cy=main] .common_button').first().click();
+      cy.constructorPage().then((page) => {
+        page.addBun().addMainIngredient().placeOrder();
+      });
 
-      cy.get('[data-cy=order-button]').click();
-      cy.wait('@createOrder');
+      cy.wait('@createOrder').then(({ response }) => {
+        expect(response?.statusCode).to.eq(200);
+        expect(response?.body).to.deep.eq({
+          success: true,
+          name: 'Test Order',
+          order: { number: order.number }
+        });
+      });
 
-      cy.get('[data-cy=modal]').should('be.visible');
-      cy.get('[data-cy=order-number]').should('contain.text', order.number);
-
-      cy.get('[data-cy=modal-close]').click();
-      cy.get('[data-cy=modal]').should('not.exist');
-
-      cy.get(
-        '[data-cy="constructor-ingredients"] [data-cy="constructor-item"]'
-      ).should('have.length', 0);
-      cy.get('[data-cy=total-price]').should('contain.text', '0');
+      cy.constructorPage().then((page) => {
+        page
+          .expectModalVisible()
+          .expectOrderNumber(order.number)
+          .closeModal()
+          .expectModalNotExist()
+          .expectConstructorItemsCount(0)
+          .expectTotalPrice('0');
+      });
     });
   });
 });
